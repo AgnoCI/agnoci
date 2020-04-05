@@ -6,7 +6,7 @@ interface InstallArguments {
   noSave?: boolean
 }
 
-export function install (args?: InstallArguments): agnoci.Node {
+export function install (args?: InstallArguments, opts?: agnoci.NodeOpts): agnoci.Node {
   const command = `npm install`
   const commandArgs: string[] = []
 
@@ -22,13 +22,13 @@ export function install (args?: InstallArguments): agnoci.Node {
     commandArgs.push(`--no-optional`)
   }
   
-  return agnoci.command(`${command} ${commandArgs.join(' ')}`)
+  return agnoci.command(`${command} ${commandArgs.join(' ')}`, opts)
 }
 
-export function run (script: string): agnoci.Node {
-  return agnoci.command(`npm install ${script}`)
+export function run (script: string, opts?: agnoci.NodeOpts): agnoci.Node {
+  return agnoci.command(`npm install ${script}`, opts)
 }
 
-export function test (): agnoci.Node {
-  return agnoci.command(`npm test`)
+export function test (opts?: agnoci.NodeOpts): agnoci.Node {
+  return agnoci.command(`npm test`, opts)
 }
