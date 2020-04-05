@@ -38,24 +38,25 @@ Built out of the desire to dynamically generate pipelines, and move between prov
 ### Example
 
 ```ts
-import * as agnoci from '@agnoci/core'
+import { Pipeline, Target, command, manual, parallel, env } from '@agnoci/core'
 
-const builder: agnoci.PipelineBuilder = (ctx) => {
-  ctx.append(agnoci.command('echo hello world'))
-  ctx.append(agnoci.manual({ description: 'Please unblock me' }))
-  ctx.append(agnoci.parallel([
-    agnoci.command('echo I have been unblocked!'),
-    agnoci.command('echo My git branch is $branch', {
-      env: { branch: agnoci.env.branch() }
-    })
-  ]))
-}
-
-const pipeline = agnoci.Pipeline(builder, {
-  target: agnoci.Target.Buildkite
+const pipeline = new Pipeline({
+  target: Target.Buildkite
 })
 
-console.log(pipeline)
+pipeline.append(command('echo hello world'))
+pipeline.append(manual({ description: 'Please unblock me' }))
+pipeline.append(parallel([
+  command('echo I have been unblocked!'),
+  command('echo My git branch is $branch', {
+    env: {
+      branch: env.branch()
+    }
+  })
+]))
+
+console.log(pipeline.generate())
+
 ```
 
 Which, when executed, outputs a valid Buildkite pipeline:

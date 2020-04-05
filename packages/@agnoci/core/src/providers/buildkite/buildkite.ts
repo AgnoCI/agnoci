@@ -1,3 +1,4 @@
+import { Pipeline } from '../../pipeline'
 import * as nodes from '../../blocks'
 
 import {
@@ -11,8 +12,8 @@ import * as BKTypes from './types'
 let branchRestrictions: string[] | null = null
 let globalEnv: EnvironmentResolver | null = null
 
-export function generate (pipeline: nodes.Node[]): BKTypes.BKPipeline {
-  const steps: BKTypes.BKNode[] = iterate(pipeline)
+export function generate (pipeline: Pipeline): BKTypes.BKPipeline {
+  const steps: BKTypes.BKNode[] = iterate(pipeline.steps())
 
   const result: BKTypes.BKPipeline = {
     steps

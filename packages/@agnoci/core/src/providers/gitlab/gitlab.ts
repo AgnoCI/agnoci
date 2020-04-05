@@ -1,5 +1,6 @@
 import * as yaml from 'js-yaml'
 
+import { Pipeline } from '../../pipeline'
 import * as nodes from '../../blocks'
 
 import {
@@ -15,8 +16,8 @@ let stages: string[] = []
 let branchRestrictions: string[] | null = null
 let globalEnv: EnvironmentResolver | null = null
 
-export function generate (pipeline: nodes.Node[]): string {
-  const steps = iterate(pipeline)
+export function generate (pipeline: Pipeline): string {
+  const steps = iterate(pipeline.steps())
 
   const _stages: {
     [stage: string]: GLTypes.GLStep

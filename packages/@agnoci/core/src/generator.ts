@@ -1,7 +1,7 @@
 import {
-  PipelineConfiguration,
+  Pipeline,
   Target
-} from './core'
+} from './pipeline'
 
 import { Node } from './blocks'
 
@@ -10,10 +10,9 @@ import { generate as bash } from './providers/bash/bash'
 import { generate as gitlab } from './providers/gitlab/gitlab'
 
 export function generate (
-  pipeline: Node[],
-  config: PipelineConfiguration
-): unknown {
-  switch (config.target) {
+  pipeline: Pipeline
+): any {
+  switch (pipeline.target) {
     case Target.Buildkite: return buildkite(pipeline)
     case Target.Bash: return bash(pipeline)
     case Target.Gitlab: return gitlab(pipeline)

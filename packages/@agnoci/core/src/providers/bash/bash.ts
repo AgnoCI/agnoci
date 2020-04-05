@@ -1,3 +1,4 @@
+import { Pipeline } from '../../pipeline'
 import * as nodes from '../../blocks'
 
 import {
@@ -9,8 +10,8 @@ import {
 let branchRestrictions: string[] | null = null
 let globalEnv: EnvironmentResolver | null = null
 
-export function generate (pipeline: nodes.Node[]): string {
-  let steps: string[] = iterate(pipeline)
+export function generate (pipeline: Pipeline): string {
+  let steps: string[] = iterate(pipeline.steps())
 
   if (globalEnv) {
     const env = resolveEnvironment(globalEnv, resolveEnvironmentKey)

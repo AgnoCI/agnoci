@@ -1,12 +1,12 @@
-import * as agnoci from '../../packages/@agnoci/core/lib/core'
-import * as docker from '../../packages/@agnoci/docker/lib/docker'
-import { npm } from '../../packages/@agnoci/node/lib/node'
+import { Pipeline, Target, Artifact, Node, single, parallel, manual, env } from '../../packages/@agnoci/core'
+import * as docker from '../../packages/@agnoci/docker'
+import { npm } from '../../packages/@agnoci/node'
 
 // Import our package.json we can pull some info from it
 import * as pkg from '../package.json'
 
 // Define an artifact that we may wish to upload.
-const coverageArtifact = new agnoci.Artifact({
+const coverageArtifact = new Artifact({
   source: 'coverage',
   destination: 'coverage',
   directory: true
@@ -18,8 +18,8 @@ const coverageArtifact = new agnoci.Artifact({
     2) Run our `test:coverage` command
     3) Upload our artifact
 */
-function runCoverageTests (): agnoci.Node {
-  return agnoci.single([
+function runCoverageTests (): Node {
+  return single([
     npm.install({ noOptional: true }),
     npm.run('test:coverage'),
     coverageArtifact.upload()
@@ -31,8 +31,8 @@ function runCoverageTests (): agnoci.Node {
 // Build out our lint tests separately
 // from our coverage tests, as these
 // can be run in parallel to the above.
-function runLintTests (): agnoci.Node {
-  return agnoci.single([
+function runLintTests (): Node {
+  return single([
     npm.install({ noOptional: true }),
     npm.run('lint'),
   ], {
@@ -42,8 +42,8 @@ function runLintTests (): agnoci.Node {
 
 // Wrap our above test functions in a parallel
 // node, so they get run at the same time.
-function runTests (): agnoci.Node {
-  return agnoci.parallel([
+function runTests (): Node {
+  return parallel([
     runCoverageTests(),
     runLintTests()
   ])
@@ -52,7 +52,7 @@ function runTests (): agnoci.Node {
 /*
   Build our initial docker image.
 */
-function buildDockerImage (): agnoci.Node {
+function buildDockerImage (): Node {
   return docker.build({
     image: '$image',
     tag: '$branch'
@@ -62,7 +62,7 @@ function buildDockerImage (): agnoci.Node {
       // ensure that our pipeline will be compatible with
       // all providers, as they usually provide these built-in
       // variables with different names.
-      branch: agnoci.env.branch(),
+      branch: env.branch(),
       // We can also set these variables to static strings
       // if we know what we want them to be, ahead of time.
       image: pkg.name
@@ -70,29 +70,29 @@ function buildDockerImage (): agnoci.Node {
   })
 }
 
-function pushDockerImage (tag?: string): agnoci.Node {
+function pushDockerImage (tag?: string): Node {
   return docker.push({
     image: pkg.name,
     tag: tag || '$branch'
   }, {
-    env: { branch: agnoci.env.branch() }
+    env: { branch: env.branch() }
   })
 }
 
-function tagDockerImage (tag: string): agnoci.Node {
+function tagDockerImage (tag: string): Node {
   return docker.tag({
     image: pkg.name,
     oldTag: '$branch',
     newTag: tag
   }, {
-    env: { branch: agnoci.env.branch() }
+    env: { branch: env.branch() }
   })
 }
 
 // Wrap these in a single command, to ensure they're
 // run in the same "step" on our target provider.
-function buildAndPushDockerImage (): agnoci.Node {
-  return agnoci.single([
+function buildAndPushDockerImage (): Node {
+  return single([
     buildDockerImage(),
     pushDockerImage()
   ])
@@ -100,30 +100,30 @@ function buildAndPushDockerImage (): agnoci.Node {
 
 // As above, we need to make sure we tag and push in
 // the same step, so wrap these in a single node.
-function tagAndPushDockerImage (tag: string): agnoci.Node {
-  return agnoci.single([
+function tagAndPushDockerImage (tag: string): Node {
+  return single([
     tagDockerImage(tag),
     docker.push({ image: pkg.name, tag })
   ])
 }
 
 /*
-  Start building our pipeline.
-  Each top-level step you append here will
-  block until the previous node has finished.
+  Create a new pipeline, and then start appending
+  our steps to it. Each top-level step you append
+  here will block until the previous node has finished.
 */
-const builder: agnoci.PipelineBuilder = (ctx) => {
-  ctx.append(runTests())
-  ctx.append(buildAndPushDockerImage())
-  ctx.append(agnoci.manual({ description: 'Tag as unstable' }))
-  // As we're just calling functions, we can abstract this logic
-  // and just pass the new tag as a parameter.
-  ctx.append(tagAndPushDockerImage('unstable'))
-  ctx.append(agnoci.manual({ description: 'Tag as stable' }))
-  ctx.append(tagAndPushDockerImage('stable'))
-}
+const pipeline = new Pipeline({
+  target: Target.Gitlab
+})
 
-// Log our pipeline to stdout
-console.log(agnoci.Pipeline(builder, {
-  target: agnoci.Target.Gitlab
-}))
+pipeline.append(runTests())
+pipeline.append(buildAndPushDockerImage())
+pipeline.append(manual({ description: 'Tag as unstable' }))
+
+// As we're just calling functions, we can abstract this logic
+// and just pass the new tag as a parameter.
+pipeline.append(tagAndPushDockerImage('unstable'))
+pipeline.append(manual({ description: 'Tag as stable' }))
+pipeline.append(tagAndPushDockerImage('stable'))
+
+console.log(pipeline.generate())
