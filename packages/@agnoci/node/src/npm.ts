@@ -21,8 +21,10 @@ export function install (args?: InstallArguments, opts?: agnoci.NodeOpts): agnoc
   if (args?.noOptional) {
     commandArgs.push(`--no-optional`)
   }
+
+  commandArgs.unshift(command)
   
-  return agnoci.command(`${command} ${commandArgs.join(' ')}`, opts)
+  return agnoci.command(commandArgs.join(' '), opts)
 }
 
 export function run (script: string, opts?: agnoci.NodeOpts): agnoci.Node {

@@ -12,14 +12,16 @@ interface CreateRepositoryArgs {
 
 export function createRepository (name: string, params?: CreateRepositoryArgs, opts?: agnoci.NodeOpts): agnoci.Node {
   const baseCommand = `aws ecr create-repository --repository-name ${name}`
-  const args: string[] = []
+  const commandParts: string[] = []
 
   for (const key in params) {
     let value = params[key]
 
     if (typeof value === 'object') value = JSON.stringify(value)
-    args.push(`--${key} ${value}`)    
+    commandParts.push(`--${key} ${value}`)    
   }
 
-  return agnoci.command(`${baseCommand} ${args.join(' ')}`, opts)
+  commandParts.unshift(baseCommand)
+
+  return agnoci.command(commandParts.join(' '), opts)
 }

@@ -96,5 +96,5 @@ export function run (args: RunArgs, opts?: agnoci.NodeOpts): agnoci.Node {
 }
 
 export function tag (args: TagArgs, opts?: agnoci.NodeOpts): agnoci.Node {
-  return agnoci.command(`docker tag ${args.image}:${args.oldTag} ${args.image}:${args.newTag}`)
+  return agnoci.command(`docker tag ${args.image}:${args.oldTag} ${args.image}:${args.newTag}`, opts)
 }
